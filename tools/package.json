@@ -1,0 +1,13 @@
+{
+  "name": "newgui-tools",
+  "private": true,
+  "type": "module",
+  "description": "NewGUI 构建辅助脚本(图标生成 / 预览图渲染), 不参与执行器运行时",
+  "scripts": {
+    "icons": "node make_icons.mjs",
+    "preview": "node make_preview.mjs"
+  },
+  "dependencies": {
+    "sharp": "^0.35.5"
+  }
+}

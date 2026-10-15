@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<!--
+  NewGUI 预览渲染用的本地 fontconfig。
+  说明: 沙箱/CI 里通常没有任何系统字体, 中文会渲染成方块。
+  这个配置把 tools/.cache/fonts 下的 Noto Sans SC(思源黑体简体, SIL OFL 1.1)
+  注册成默认字体, 供 sharp/libvips 渲染预览图使用。
+  字体文件由 tools/fetch_fonts.mjs 下载, 不进入仓库(见 .gitignore)。
+-->
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+	<dir>FONT_DIR_PLACEHOLDER</dir>
+	<cachedir>FONT_CACHE_PLACEHOLDER</cachedir>
+
+	<match target="pattern">
+		<edit name="family" mode="prepend" binding="strong">
+			<string>Noto Sans SC</string>
+		</edit>
+	</match>
+
+	<alias>
+		<family>sans-serif</family>
+		<prefer>
+			<family>Noto Sans SC</family>
+		</prefer>
+	</alias>
+	<alias>
+		<family>monospace</family>
+		<prefer>
+			<family>Noto Sans SC</family>
+		</prefer>
+	</alias>
+
+	<match target="pattern">
+		<test name="family">
+			<string>Gotham</string>
+		</test>
+		<edit name="family" mode="assign" binding="strong">
+			<string>Noto Sans SC</string>
+		</edit>
+	</match>
+	<match target="pattern">
+		<test name="family">
+			<string>Code</string>
+		</test>
+		<edit name="family" mode="assign" binding="strong">
+			<string>Noto Sans SC</string>
+		</edit>
+	</match>
+</fontconfig>

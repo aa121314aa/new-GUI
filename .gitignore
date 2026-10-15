@@ -1,0 +1,13 @@
+# 工具链 / 本地依赖
+node_modules/
+tools/.cache/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 临时与构建缓存
+*.tmp
+.DS_Store
+
+# 注意: dist/ 是发布产物, 需要提交(执行器通过 raw 链接直接加载)

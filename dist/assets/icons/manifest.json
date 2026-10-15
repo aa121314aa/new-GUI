@@ -1,0 +1,26 @@
+{
+  "source": "lucide-static v1.57.0",
+  "license": "ISC",
+  "size": 128,
+  "icons": {
+    "sparkle": "sparkle.png",
+    "grid": "layout-grid.png",
+    "settings": "settings.png",
+    "info": "info.png",
+    "close": "x.png",
+    "minimize": "minus.png",
+    "search": "search.png",
+    "player": "user-round.png",
+    "sliders": "sliders-horizontal.png",
+    "terminal": "square-terminal.png",
+    "check": "check.png",
+    "chevron": "chevron-down.png",
+    "arrow": "arrow-right.png",
+    "bolt": "zap.png",
+    "eye": "eye.png",
+    "shield": "shield.png",
+    "trash": "trash-2.png",
+    "copy": "copy.png",
+    "book": "book-open.png"
+  }
+}
