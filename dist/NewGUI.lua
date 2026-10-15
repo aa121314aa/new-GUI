@@ -3177,6 +3177,21 @@ local function card(instance, cornerKind, strokeColor)
 	return instance
 end
 
+--[=[
+	UserInputService 这类全局连接不会随控件销毁自动断开。
+	这里统一挂到实例的 Destroying 上, 避免重建界面后旧控件仍在响应输入。
+]=]
+local function trackGlobal(instance, connection)
+	if instance.Destroying then
+		instance.Destroying:Connect(function()
+			pcall(function()
+				connection:Disconnect()
+			end)
+		end)
+	end
+	return connection
+end
+
 --[=[ 高度 = 基准轴百分比 ]=]
 local function heightOf(instance, percent)
 	Scale.bind(instance, function()
@@ -3736,25 +3751,32 @@ function Widgets.slider(parent, opts)
 			setValue(valueFromX(input.Position.X), true)
 		end
 	end)
-	UserInputService.InputChanged:Connect(function(input)
-		if
-			dragging
-			and (
-				input.UserInputType == Enum.UserInputType.MouseMovement
+	-- 全局连接: 控件销毁时自动断开(否则重建界面后会残留在输入事件上)
+	trackGlobal(
+		row,
+		UserInputService.InputChanged:Connect(function(input)
+			if
+				dragging
+				and (
+					input.UserInputType == Enum.UserInputType.MouseMovement
+					or input.UserInputType == Enum.UserInputType.Touch
+				)
+			then
+				setValue(valueFromX(input.Position.X), true)
+			end
+		end)
+	)
+	trackGlobal(
+		row,
+		UserInputService.InputEnded:Connect(function(input)
+			if
+				input.UserInputType == Enum.UserInputType.MouseButton1
 				or input.UserInputType == Enum.UserInputType.Touch
-			)
-		then
-			setValue(valueFromX(input.Position.X), true)
-		end
-	end)
-	UserInputService.InputEnded:Connect(function(input)
-		if
-			input.UserInputType == Enum.UserInputType.MouseButton1
-			or input.UserInputType == Enum.UserInputType.Touch
-		then
-			dragging = false
-		end
-	end)
+			then
+				dragging = false
+			end
+		end)
+	)
 
 	function object:Set(nextValue)
 		setValue(nextValue, true)
@@ -4185,7 +4207,7 @@ function Widgets.keybind(parent, opts)
 		keyLabel.TextColor3 = palette.accent
 		keyBox.BackgroundColor3 = palette.card
 
-		connection = UserInputService.InputBegan:Connect(function(input, processed)
+		connection = trackGlobal(row, UserInputService.InputBegan:Connect(function(input, processed)
 			if processed then
 				return
 			end
@@ -4222,7 +4244,7 @@ function Widgets.keybind(parent, opts)
 					warn("[NewGUI] keybind.changed 报错: " .. tostring(err))
 				end
 			end
-		end)
+		end))
 	end
 
 	button.MouseButton1Click:Connect(function()
@@ -4782,6 +4804,8 @@ end
 --============================ 拖动 / 缩放 ============================--
 function Window:_setupDragging(dragArea, grip)
 	local windowConfig = Config.window
+	-- 所有 UserInputService 连接都登记下来, 销毁时统一断开(否则重建后旧窗口仍在响应)
+	local connections = self._connections
 
 	-- 拖动
 	local dragging, dragStart, startPos = false, nil, nil
@@ -4796,7 +4820,7 @@ function Window:_setupDragging(dragArea, grip)
 		end
 	end)
 
-	UserInputService.InputChanged:Connect(function(input)
+	table.insert(connections, UserInputService.InputChanged:Connect(function(input)
 		if not dragging then
 			return
 		end
@@ -4813,9 +4837,9 @@ function Window:_setupDragging(dragArea, grip)
 			self.position = { x = x / math.max(viewport.X, 1), y = y / math.max(viewport.Y, 1) }
 			self.root.Position = UDim2.fromScale(self.position.x, self.position.y)
 		end
-	end)
+	end))
 
-	UserInputService.InputEnded:Connect(function(input)
+	table.insert(connections, UserInputService.InputEnded:Connect(function(input)
 		if not dragging then
 			return
 		end
@@ -4833,7 +4857,7 @@ function Window:_setupDragging(dragArea, grip)
 				})
 			end
 		end
-	end)
+	end))
 
 	-- 缩放
 	local resizing, resizeStart, startSize = false, nil, nil
@@ -4848,7 +4872,7 @@ function Window:_setupDragging(dragArea, grip)
 		end
 	end)
 
-	UserInputService.InputChanged:Connect(function(input)
+	table.insert(connections, UserInputService.InputChanged:Connect(function(input)
 		if not resizing then
 			return
 		end
@@ -4865,9 +4889,9 @@ function Window:_setupDragging(dragArea, grip)
 			self.size.height = height / math.max(viewport.Y, 1)
 			self.root.Size = UDim2.new(self.size.width, 0, self.size.height, 0)
 		end
-	end)
+	end))
 
-	UserInputService.InputEnded:Connect(function(input)
+	table.insert(connections, UserInputService.InputEnded:Connect(function(input)
 		if not resizing then
 			return
 		end
@@ -4886,7 +4910,7 @@ function Window:_setupDragging(dragArea, grip)
 				height = self.size.height,
 			})
 		end
-	end)
+	end))
 end
 
 --============================ 页面 ============================--

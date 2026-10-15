@@ -47,6 +47,10 @@ NewGUI/assets/icons/*.png            -- 图标(用于 getcustomasset)
 | `Config.orb.corner` | `0.85` | 圆角 = 基准轴的 0.85%（720p 下约 6px，克制的像素圆角）|
 | `Config.orb.iconSize` | `3.1` | 图标边长 = 基准轴的 3.1% |
 
+放大看（720p 下实测 55×43px，圆角约 6px）：
+
+![悬浮球放大](docs/images/orb-zoom.png)
+
 - 可拖动：位移超过 4px 才算拖动，松手才判定点击 —— 拖动不会误触打开窗口
 - 位置按**视口百分比**保存，换分辨率/转屏后仍在原相对位置；超出边界会自动钳制
 - 图标优先用 PNG（可被 `ImageColor3` 染色），拿不到就自动换成内置矢量图标

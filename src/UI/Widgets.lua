@@ -50,6 +50,21 @@ local function card(instance, cornerKind, strokeColor)
 	return instance
 end
 
+--[=[
+	UserInputService 这类全局连接不会随控件销毁自动断开。
+	这里统一挂到实例的 Destroying 上, 避免重建界面后旧控件仍在响应输入。
+]=]
+local function trackGlobal(instance, connection)
+	if instance.Destroying then
+		instance.Destroying:Connect(function()
+			pcall(function()
+				connection:Disconnect()
+			end)
+		end)
+	end
+	return connection
+end
+
 --[=[ 高度 = 基准轴百分比 ]=]
 local function heightOf(instance, percent)
 	Scale.bind(instance, function()
@@ -609,25 +624,32 @@ function Widgets.slider(parent, opts)
 			setValue(valueFromX(input.Position.X), true)
 		end
 	end)
-	UserInputService.InputChanged:Connect(function(input)
-		if
-			dragging
-			and (
-				input.UserInputType == Enum.UserInputType.MouseMovement
+	-- 全局连接: 控件销毁时自动断开(否则重建界面后会残留在输入事件上)
+	trackGlobal(
+		row,
+		UserInputService.InputChanged:Connect(function(input)
+			if
+				dragging
+				and (
+					input.UserInputType == Enum.UserInputType.MouseMovement
+					or input.UserInputType == Enum.UserInputType.Touch
+				)
+			then
+				setValue(valueFromX(input.Position.X), true)
+			end
+		end)
+	)
+	trackGlobal(
+		row,
+		UserInputService.InputEnded:Connect(function(input)
+			if
+				input.UserInputType == Enum.UserInputType.MouseButton1
 				or input.UserInputType == Enum.UserInputType.Touch
-			)
-		then
-			setValue(valueFromX(input.Position.X), true)
-		end
-	end)
-	UserInputService.InputEnded:Connect(function(input)
-		if
-			input.UserInputType == Enum.UserInputType.MouseButton1
-			or input.UserInputType == Enum.UserInputType.Touch
-		then
-			dragging = false
-		end
-	end)
+			then
+				dragging = false
+			end
+		end)
+	)
 
 	function object:Set(nextValue)
 		setValue(nextValue, true)
@@ -1058,7 +1080,7 @@ function Widgets.keybind(parent, opts)
 		keyLabel.TextColor3 = palette.accent
 		keyBox.BackgroundColor3 = palette.card
 
-		connection = UserInputService.InputBegan:Connect(function(input, processed)
+		connection = trackGlobal(row, UserInputService.InputBegan:Connect(function(input, processed)
 			if processed then
 				return
 			end
@@ -1095,7 +1117,7 @@ function Widgets.keybind(parent, opts)
 					warn("[NewGUI] keybind.changed 报错: " .. tostring(err))
 				end
 			end
-		end)
+		end))
 	end
 
 	button.MouseButton1Click:Connect(function()

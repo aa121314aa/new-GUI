@@ -374,6 +374,8 @@ end
 --============================ 拖动 / 缩放 ============================--
 function Window:_setupDragging(dragArea, grip)
 	local windowConfig = Config.window
+	-- 所有 UserInputService 连接都登记下来, 销毁时统一断开(否则重建后旧窗口仍在响应)
+	local connections = self._connections
 
 	-- 拖动
 	local dragging, dragStart, startPos = false, nil, nil
@@ -388,7 +390,7 @@ function Window:_setupDragging(dragArea, grip)
 		end
 	end)
 
-	UserInputService.InputChanged:Connect(function(input)
+	table.insert(connections, UserInputService.InputChanged:Connect(function(input)
 		if not dragging then
 			return
 		end
@@ -405,9 +407,9 @@ function Window:_setupDragging(dragArea, grip)
 			self.position = { x = x / math.max(viewport.X, 1), y = y / math.max(viewport.Y, 1) }
 			self.root.Position = UDim2.fromScale(self.position.x, self.position.y)
 		end
-	end)
+	end))
 
-	UserInputService.InputEnded:Connect(function(input)
+	table.insert(connections, UserInputService.InputEnded:Connect(function(input)
 		if not dragging then
 			return
 		end
@@ -425,7 +427,7 @@ function Window:_setupDragging(dragArea, grip)
 				})
 			end
 		end
-	end)
+	end))
 
 	-- 缩放
 	local resizing, resizeStart, startSize = false, nil, nil
@@ -440,7 +442,7 @@ function Window:_setupDragging(dragArea, grip)
 		end
 	end)
 
-	UserInputService.InputChanged:Connect(function(input)
+	table.insert(connections, UserInputService.InputChanged:Connect(function(input)
 		if not resizing then
 			return
 		end
@@ -457,9 +459,9 @@ function Window:_setupDragging(dragArea, grip)
 			self.size.height = height / math.max(viewport.Y, 1)
 			self.root.Size = UDim2.new(self.size.width, 0, self.size.height, 0)
 		end
-	end)
+	end))
 
-	UserInputService.InputEnded:Connect(function(input)
+	table.insert(connections, UserInputService.InputEnded:Connect(function(input)
 		if not resizing then
 			return
 		end
@@ -478,7 +480,7 @@ function Window:_setupDragging(dragArea, grip)
 				height = self.size.height,
 			})
 		end
-	end)
+	end))
 end
 
 --============================ 页面 ============================--

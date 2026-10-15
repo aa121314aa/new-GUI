@@ -245,6 +245,13 @@ def main():
 	-- 通知
 	handle:Notify({{ title = "测试", text = "通知系统", kind = "success" }})
 
+	-- 连接泄漏检查: 桩里的 UserInputService 记录所有 InputBegan 监听
+	local beforeRebuild = 0
+	local uis = game:GetService("UserInputService")
+	if uis._events and uis._events.InputBegan then
+		beforeRebuild = #uis._events.InputBegan._handlers
+	end
+
 	-- 关闭 / 重新构建 / 卸载
 	window:Close()
 	check("关闭窗口", window:IsOpen() == false)
@@ -254,6 +261,13 @@ def main():
 	check("重建界面", rebuilt ~= nil and rebuilt.window ~= nil)
 	rebuilt:Unload()
 	check("卸载后句柄失效", NewGUI._instance == nil)
+
+	-- 卸载后所有全局输入监听都应断开
+	local afterUnload = 0
+	if uis._events and uis._events.InputBegan then
+		afterUnload = #uis._events.InputBegan._handlers
+	end
+	check("全局输入监听已清理", afterUnload == 0, "卸载前 " .. beforeRebuild .. " → 卸载后 " .. afterUnload)
 
 	return results
 	"""
