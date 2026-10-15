@@ -1,0 +1,25 @@
+# 想开启 GitHub Actions: 把本文件复制到 .github/workflows/build.yml 即可
+# (仓库的 GitHub App 目前没有 workflows 权限, 所以默认放在 ci/ 下不生效)
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装 lupa(用于 Lua 语法检查与端到端模拟)
+        run: pip install lupa
+
+      - name: 验证(语法 + 打包 + 端到端模拟)
+        run: bash ci/verify.sh
